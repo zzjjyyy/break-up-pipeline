@@ -20,8 +20,8 @@ extern void PQclear(PGresult* res);
 
 int main()
 {
-	char str[33] = "D:\\Database\\exper\\exper1\\res.txt";
-	char str1[34] = "D:\\Database\\exper\\exper1\\plan.txt";
+	char str[33] = ".\\res.txt";
+	char str1[34] = ".\\plan.txt";
 	FILE* f_res = fopen(str, "w+");
 	fclose(f_res);
 	FILE* f_plan = fopen(str1, "w+");
@@ -33,7 +33,7 @@ int main()
 		PGconn* conn = PQsetdbLogin("127.0.0.1", "5432", NULL, NULL, "imdbload", "", "");
 		PGresult* result = NULL;
 		char fpath[60];
-		sprintf(fpath, "D:\\Database\\exper\\Agg\\%d.sql", i + 1);
+		sprintf(fpath, "..\\Agg\\%d.sql", i + 1);
 		std::cout << i + 1 << "   ";
 		fprintf(f_res, "%d\t", i + 1);
 		fprintf(f_plan, "%d\n", i + 1);
