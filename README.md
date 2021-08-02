@@ -8,5 +8,5 @@
 * Using the benchmark in Agg filefolder, and add "explain (analyze)" on the head of queries. And the source codes of experiment are in Experiment1 filefolder.
 
 # Strategy 1, 2 and 3
-##Experiemnt2
+## Experiment2
 * Using the benchmark in NoAgg filefolder, because we add aggregate function in the source code. And the source codes of experiment are in Experiment2 filefolder.
