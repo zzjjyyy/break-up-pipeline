@@ -18,15 +18,16 @@
 #include "utils/rel.h"
 #include <stdlib.h>
 #include "utils/hashutils.h"
-#include "test.h"
 
 #define COMPARE_SCALAR_FIELD(fldname) do { if (a->fldname != b->fldname) return false;} while (0)
 #define foreach_myList(cell, l)	for ((cell) = mylist_head(l); (cell) != NULL; (cell) = lnext(cell))
 myList* CheckList = ((myList*)NULL); // The list of sturct History
 
-extern Selectivity get_foreign_key_join_selectivity(PlannerInfo * root, Relids outer_relids, Relids inner_relids, SpecialJoinInfo * sjinfo, List * *restrictlist);
+extern double clamp_row_est(double nrows);
+extern Selectivity get_foreign_key_join_selectivity(PlannerInfo* root, Relids outer_relids, Relids inner_relids, SpecialJoinInfo* sjinfo, List** restrictlist);
+extern Selectivity clauselist_selectivity(PlannerInfo* root, List* clauses, int varRelid, JoinType jointype, SpecialJoinInfo* sjinfo);
 
-static inline myListCell* mylist_head(const myList * l)
+static inline myListCell* mylist_head(const myList* l)
 {
 	return l ? l->head : NULL;
 }
@@ -97,11 +98,11 @@ History* LookupHistory(int rel)
 *  Whenever caculating a cardinality of a temporary relation, the optimizer call this function.
 *  The input joinrel is the temporary relation, inner_rel and outer_rel is joinrel's subtree.
 *  If the joinrel we have met before this SQL query, we return the true selectivity instead of use Postgres's estimation.
-*  If not we record this joinrel and get the true selectivity after executor. 
+*  If not we record this joinrel and get the true selectivity after executor.
 */
 double learn_from_history(const PlannerInfo* root, const RelOptInfo* joinrel,
-						const RelOptInfo* outer_rel, const RelOptInfo* inner_rel,
-						const List* joininfo, SpecialJoinInfo* sjinfo)
+	const RelOptInfo* outer_rel, const RelOptInfo* inner_rel,
+	const List* joininfo, SpecialJoinInfo* sjinfo)
 {
 	int rel = joinrel->relids->words[0];
 	/* If we have met this relation before ? */
@@ -255,7 +256,7 @@ double learn_from_history(const PlannerInfo* root, const RelOptInfo* joinrel,
 			else
 			{
 				Selectivity selec = clauselist_selectivity(root, joinrel->baserestrictinfo, 0, JOIN_INNER, NULL);
-				return clamp_row_est(selec * joinrel->tuples /1000);
+				return clamp_row_est(selec * joinrel->tuples / 1000);
 			}
 		}
 		/* Have been Executed */
@@ -329,7 +330,7 @@ int learnSelectivity(const QueryDesc* queryDesc, const PlanState* planstate, dou
 				if (((History*)lc->data)->is_true == false)
 				{
 					((History*)lc->data)->is_true = true;
-					if(planstate->instrument->ntuples == 0.0)
+					if (planstate->instrument->ntuples == 0.0)
 						((History*)lc->data)->rows = planstate->instrument->tuplecount;
 					else
 						((History*)lc->data)->rows = planstate->instrument->ntuples;
@@ -384,7 +385,7 @@ int learnSelectivity(const QueryDesc* queryDesc, const PlanState* planstate, dou
 	/* This PlanState Node represent a temporary relation
 	*  And we need to find out the corresponding History
 	*/
-	myListCell *lc;
+	myListCell* lc;
 	foreach_myList(lc, CheckList)
 	{
 		his = ((History*)lc->data);
