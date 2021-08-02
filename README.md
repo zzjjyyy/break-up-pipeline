@@ -11,5 +11,6 @@ You can get the dataset on gregrahn/join-order-benchmark by Github. And total 91
 * Using the benchmark in Agg filefolder, and add "explain (analyze)" on the head of queries. And the source codes of experiment are in Experiment1 filefolder.
 
 # Reoptimization and Strategy 1, 2 and 3
+This part do not support "explain" command.
 ## Experiment2
 * Using the benchmark in NoAgg filefolder, because we add aggregate function in the source code. And the source codes of experiment are in Experiment2 filefolder.
