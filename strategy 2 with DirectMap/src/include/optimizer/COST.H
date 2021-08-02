@@ -12,7 +12,7 @@
  *-------------------------------------------------------------------------
  */
 /*
-* Edited by zhaojy20 in line 64, 160, 161.
+* Edited by zhaojy20 in line 64, 159, 160.
 */
 #ifndef COST_H
 #define COST_H
@@ -62,7 +62,6 @@ extern PGDLLIMPORT bool enable_material;
 extern PGDLLIMPORT bool enable_mergejoin;
 extern PGDLLIMPORT bool enable_hashjoin;
 extern PGDLLIMPORT bool enable_directmap;
-extern PGDLLIMPORT bool enable_multiway;
 extern PGDLLIMPORT bool enable_gathermerge;
 extern PGDLLIMPORT bool enable_partitionwise_join;
 extern PGDLLIMPORT bool enable_partitionwise_aggregate;
@@ -159,8 +158,6 @@ extern void final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 								JoinPathExtraData *extra);
 extern void initial_cost_directmap(PlannerInfo* root, JoinCostWorkspace* workspace, JoinType jointype, List* hashclauses,  Path* outer_path, Path* inner_path, JoinPathExtraData* extra);
 void final_cost_directmap(PlannerInfo* root, DirectMapPath* path, JoinCostWorkspace* workspace, JoinPathExtraData* extra);
-void initial_cost_multiway(PlannerInfo* root, JoinCostWorkspace* workspace, JoinType jointype, Path* outer_path, Path* inner_path, JoinPathExtraData* extra);
-void final_cost_multiway(PlannerInfo* root, MultiWayPath* path, JoinCostWorkspace* workspace, JoinPathExtraData* extra);
 extern void cost_gather(GatherPath *path, PlannerInfo *root,
 						RelOptInfo *baserel, ParamPathInfo *param_info, double *rows);
 extern void cost_gather_merge(GatherMergePath *path, PlannerInfo *root,
