@@ -53,16 +53,16 @@ int main()
 		arr[cnt++] = val;
 	}
 	free(is_get);
-	FILE* f_log = fopen("D:\\Database\\exper\\exper2\\log.txt", "w+");
+	FILE* f_log = fopen(".\\log.txt", "w+");
 	fclose(f_log);
-	f_log = fopen("D:\\Database\\exper\\exper2\\log.txt", "wt");
+	f_log = fopen(".\\log.txt", "wt");
 	for (int i = 0; i < 91; i++)
 	{
 		PGconn* conn = PQsetdbLogin("127.0.0.1", "5432", NULL, NULL, "imdbload", "", "");
 		//PQexec(conn, "set client_encoding to \'utf8\';");
 		PGresult* result = NULL;
 		char fpath[60];
-		sprintf(fpath, "D:\\Database\\exper\\NoAgg\\%d.sql", arr[i]);
+		sprintf(fpath, "..\\NoAgg\\%d.sql", arr[i]);
 		//PQexec(conn, "set enable_mergejoin = false;");
 		std::cout << i << " " << fpath << "   ";
 		fprintf(f_log, "%d\t", arr[i]);
