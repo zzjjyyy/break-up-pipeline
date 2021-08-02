@@ -1985,15 +1985,6 @@ typedef struct DirectMapState
 	unsigned int offset;
 } DirectMapState;
 
-typedef struct MultiWayState
-{
-	JoinState js;
-	bool mul_NeedNewOuter;
-	bool mul_NeedNewMiddle;
-	bool mul_Matched;
-	TupleTableSlot* mul_NullInnerTupleSlot;
-} MultiWayState;
-
 /* ----------------------------------------------------------------
  *				 Materialization State Information
  * ----------------------------------------------------------------
