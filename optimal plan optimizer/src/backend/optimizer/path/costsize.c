@@ -67,7 +67,7 @@
  *	  src/backend/optimizer/path/costsize.c
  *
  *  Edited by zhaojy20.
- *   Add some function entry in line 4406¡¢4476¡¢4512.
+ *   Add some function entry in line 4406Â¡Â¢4476Â¡Â¢4512.
  *-------------------------------------------------------------------------
  */
 /* 
@@ -100,7 +100,6 @@
 #include "utils/tuplesort.h"
 
 #include "optimizer/lfh.h"
-#include "optimizer/mySelectivity.h"
 
 #define LOG2(x)  (log(x) / 0.693147180559945)
 
@@ -4542,43 +4541,6 @@ calc_joinrel_size_estimate(PlannerInfo *root,
 	Selectivity jselec;
 	Selectivity pselec;
 	double		nrows;
-	mySelectivity* selec = palloc(sizeof(mySelectivity));
-
-	switch (jointype)
-	{
-		case JOIN_INNER:
-			nrows = outer_rows * inner_rows * selec->selec;
-			/* pselec not used */
-			break;
-		case JOIN_LEFT:
-			nrows = outer_rows * inner_rows * selec->selec;
-			if (nrows < outer_rows)
-				nrows = outer_rows;
-			nrows *= pselec;
-			break;
-		case JOIN_FULL:
-			nrows = outer_rows * inner_rows * selec->selec;
-			if (nrows < outer_rows)
-				nrows = outer_rows;
-			if (nrows < inner_rows)
-				nrows = inner_rows;
-			nrows *= pselec;
-			break;
-		case JOIN_SEMI:
-			nrows = outer_rows * selec->selec;
-			/* pselec not used */
-			break;
-		case JOIN_ANTI:
-			nrows = outer_rows * (1.0 - selec->selec);
-			nrows *= pselec;
-			break;
-		default:
-			/* other values not expected here */
-			elog(ERROR, "unrecognized join type: %d", (int) jointype);
-			nrows = 0;			/* keep compiler quiet */
-			break;
-	}
-	pfree(selec);
 	return clamp_row_est(nrows);
 }
 
