@@ -70,7 +70,7 @@
  */
 
 /*
-* Edited by zhaojy20 in line 3321-3481.
+* Edited by zhaojy20 in line 3320-3480.
 */
 #include "postgres.h"
 
@@ -130,7 +130,6 @@ bool enable_material = true;
 bool enable_mergejoin = true;
 bool enable_hashjoin = true;
 bool enable_directmap = true;
-bool enable_multiway = true;
 bool enable_gathermerge = true;
 bool enable_partitionwise_join = false;
 bool enable_partitionwise_aggregate = false;
