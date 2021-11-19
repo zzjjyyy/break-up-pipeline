@@ -17,7 +17,7 @@
  *-------------------------------------------------------------------------
  */
 /*
-* Edited by zhaojy20 in line 1140.
+* Edited byy zhaojy20 in line 1140.
 */
 #include "postgres.h"
 
