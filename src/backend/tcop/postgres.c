@@ -44,6 +44,7 @@
 #include "commands/createas.h"
 #include "commands/matview.h"
 #include "commands/prepare.h"
+#include "executor/nodeDirectMap.h"
 #include "executor/spi.h"
 #include "jit/jit.h"
 #include "libpq/libpq.h"
@@ -52,6 +53,7 @@
 #include "miscadmin.h"
 #include "nodes/print.h"
 #include "nodes/makefuncs.h"
+#include "optimizer/lfh.h"
 #include "optimizer/optimizer.h"
 #include "pgstat.h"
 #include "pg_trace.h"
@@ -89,8 +91,7 @@ Block GetLocalBufferStorage(int flag);
 
 int query_splitting_algorithm = None;
 int order_decision = hybrid_sqrt;
-extern bool enable_directmap;
-extern double factor;
+
 /* ----------------
  *		global variables
  * ----------------
@@ -1035,6 +1036,8 @@ exec_simple_query(const char* query_string)
 	enable_directmap = false;
 	if (strcmp(query_string, "enable DM;") == 0)
 		enable_directmap = true;
+	else if (strcmp(query_string, "disable DM;") == 0)
+		enable_directmap = false;
 	char* substr = strstr(query_string, "set factor to ");
 	if (substr != NULL)
 	{
