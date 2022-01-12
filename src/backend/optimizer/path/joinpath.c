@@ -250,12 +250,10 @@ void add_paths_to_joinrel(PlannerInfo *root, RelOptInfo *joinrel, RelOptInfo *ou
 	if (enable_hashjoin || jointype == JOIN_FULL)
 		hash_inner_and_outer(root, joinrel, outerrel, innerrel, jointype, &extra);
 	
-	/*
 	if (enable_directmap && CheckforQualify(outerrel, innerrel))
 	{
 		considerDirectMap(root, joinrel, outerrel, innerrel, jointype, &extra);
 	}
-	*/
 
 	/*
 	 * 5. If inner and outer relations are foreign tables (or joins) belonging
@@ -1682,6 +1680,10 @@ static bool CheckforQualify(RelOptInfo* outerrel, RelOptInfo* innerrel)
 {
 	if (innerrel->relid > 0)
 	{
+		if (innerrel->rows / innerrel->tuples < 0.25)
+		{
+			return false;
+		}
 		int global_no = 0;
 		for (int i = 0;; i++)
 		{
@@ -1693,37 +1695,7 @@ static bool CheckforQualify(RelOptInfo* outerrel, RelOptInfo* innerrel)
 		}
 		if (is_relationship[global_no] == false)
 		{
-			if (outerrel->relid > 0)
-			{
-				global_no = 0;
-				for (int i = 0;; i++)
-				{
-					if (transfer_array[i] == outerrel->relid)
-					{
-						global_no = i;
-						break;
-					}
-				}
-				if (is_relationship[global_no] == false)
-				{
-					if (outerrel->rows > innerrel->rows)
-					{
-						return true;
-					}
-					else
-					{
-						return false;
-					}
-				}
-				else
-				{
-					return true;
-				}
-			}
-			else
-			{
-				return true;
-			}
+			return true;
 		}
 	}
 	return false;

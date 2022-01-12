@@ -69,9 +69,6 @@
  *-------------------------------------------------------------------------
  */
 
-/*
-* Edited by zhaojy20 in line 3320-3480.
-*/
 #include "postgres.h"
 
 #include <math.h>
@@ -99,6 +96,7 @@
 #include "utils/spccache.h"
 #include "utils/tuplesort.h"
 
+#include "optimizer/lfh.h"
 
 #define LOG2(x)  (log(x) / 0.693147180559945)
 
@@ -129,6 +127,7 @@ bool enable_nestloop = true;
 bool enable_material = true;
 bool enable_mergejoin = true;
 bool enable_hashjoin = true;
+/* zhaojy20 add one line here */
 bool enable_directmap = true;
 bool enable_gathermerge = true;
 bool enable_partitionwise_join = false;
@@ -149,7 +148,7 @@ static void get_restriction_qual_cost(PlannerInfo *root, RelOptInfo *baserel,Par
 static bool has_indexed_join_quals(NestPath *joinpath);
 static double approx_tuple_count(PlannerInfo *root, JoinPath *path, List *quals);
 static double calc_joinrel_size_estimate(PlannerInfo *root, RelOptInfo *joinrel, RelOptInfo *outer_rel, RelOptInfo *inner_rel, double outer_rows, double inner_rows, SpecialJoinInfo *sjinfo, List *restrictlist);
-static Selectivity get_foreign_key_join_selectivity(PlannerInfo *root, Relids outer_relids, Relids inner_relids, SpecialJoinInfo *sjinfo, List **restrictlist);
+Selectivity get_foreign_key_join_selectivity(PlannerInfo *root, Relids outer_relids, Relids inner_relids, SpecialJoinInfo *sjinfo, List **restrictlist);
 static Cost append_nonpartial_cost(List *subpaths, int numpaths, int parallel_workers);
 static void set_rel_width(PlannerInfo *root, RelOptInfo *rel);
 static double relation_byte_size(double tuples, int width);
@@ -661,7 +660,6 @@ cost_index(IndexPath *path, PlannerInfo *root, double loop_count,
 	 */
 	csquared = indexCorrelation * indexCorrelation;
 	
-	/*zhaojy20 has changed here*/
 	run_cost += max_IO_cost + csquared * (min_IO_cost - max_IO_cost);
 
 	/*
@@ -2695,7 +2693,6 @@ void initial_cost_mergejoin(PlannerInfo *root, JoinCostWorkspace *workspace, Joi
 	{
 		cost_sort(&sort_path, root, outersortkeys, outer_path->total_cost, outer_path_rows, outer_path->pathtarget->width, 0.0, work_mem, -1.0);
 		startup_cost += sort_path.startup_cost;
-		/*zhaojy20*/
 		startup_cost += (sort_path.total_cost - sort_path.startup_cost) * outerstartsel;
 		run_cost += (sort_path.total_cost - sort_path.startup_cost) *(outerendsel - outerstartsel);
 	}
@@ -4218,13 +4215,12 @@ has_indexed_join_quals(NestPath *joinpath)
 static double
 approx_tuple_count(PlannerInfo *root, JoinPath *path, List *quals)
 {
-	double		tuples;
-	double		outer_tuples = path->outerjoinpath->rows;
-	double		inner_tuples = path->innerjoinpath->rows;
+	double tuples;
+	double outer_tuples = path->outerjoinpath->rows;
+	double inner_tuples = path->innerjoinpath->rows;
 	SpecialJoinInfo sjinfo;
 	Selectivity selec = 1.0;
-	ListCell   *l;
-
+	ListCell* l;
 	/*
 	 * Make up a SpecialJoinInfo for JOIN_INNER semantics.
 	 */
@@ -4241,19 +4237,15 @@ approx_tuple_count(PlannerInfo *root, JoinPath *path, List *quals)
 	sjinfo.semi_can_hash = false;
 	sjinfo.semi_operators = NIL;
 	sjinfo.semi_rhs_exprs = NIL;
-
 	/* Get the approximate selectivity */
 	foreach(l, quals)
 	{
-		Node	   *qual = (Node *) lfirst(l);
-
+		Node* qual = (Node *) lfirst(l);
 		/* Note that clause_selectivity will be able to cache its result */
 		selec *= clause_selectivity(root, qual, 0, JOIN_INNER, &sjinfo);
 	}
-
 	/* Apply it to the input relation sizes */
 	tuples = selec * outer_tuples * inner_tuples;
-
 	return clamp_row_est(tuples);
 }
 
@@ -4274,22 +4266,19 @@ approx_tuple_count(PlannerInfo *root, JoinPath *path, List *quals)
 void
 set_baserel_size_estimates(PlannerInfo *root, RelOptInfo *rel)
 {
-	double		nrows;
-
+	double nrows;
 	/* Should only be applied to base relations */
 	Assert(rel->relid > 0);
-
-	nrows = rel->tuples *
-		clauselist_selectivity(root,
-							   rel->baserestrictinfo,
-							   0,
-							   JOIN_INNER,
-							   NULL);
-
-	rel->rows = clamp_row_est(nrows);
-
+	if (query_splitting_algorithm == Optimal)
+	{
+		rel->rows = learn_from_history(root, rel, NULL, NULL, NULL, NULL);
+	}
+	else
+	{
+		nrows = rel->tuples * clauselist_selectivity(root, rel->baserestrictinfo, 0, JOIN_INNER, NULL);
+		rel->rows = clamp_row_est(nrows);
+	}
 	cost_qual_eval(&rel->baserestrictcost, rel->baserestrictinfo, root);
-
 	set_rel_width(root, rel);
 }
 
@@ -4302,26 +4291,18 @@ set_baserel_size_estimates(PlannerInfo *root, RelOptInfo *rel)
  * set_baserel_size_estimates must have been applied already.
  */
 double
-get_parameterized_baserel_size(PlannerInfo *root, RelOptInfo *rel,
-							   List *param_clauses)
+get_parameterized_baserel_size(PlannerInfo *root, RelOptInfo *rel, List *param_clauses)
 {
-	List	   *allclauses;
-	double		nrows;
-
+	List* allclauses;
+	double nrows;
 	/*
 	 * Estimate the number of rows returned by the parameterized scan, knowing
 	 * that it will apply all the extra join clauses as well as the rel's own
 	 * restriction clauses.  Note that we force the clauses to be treated as
 	 * non-join clauses during selectivity estimation.
 	 */
-	allclauses = list_concat(list_copy(param_clauses),
-							 rel->baserestrictinfo);
-	nrows = rel->tuples *
-		clauselist_selectivity(root,
-							   allclauses,
-							   rel->relid,	/* do not use 0! */
-							   JOIN_INNER,
-							   NULL);
+	allclauses = list_concat(list_copy(param_clauses), rel->baserestrictinfo);
+	nrows = rel->tuples * clauselist_selectivity(root, allclauses, rel->relid, JOIN_INNER, NULL);
 	nrows = clamp_row_est(nrows);
 	/* For safety, make sure result is not more than the base estimate */
 	if (nrows > rel->rows)
@@ -4352,20 +4333,13 @@ get_parameterized_baserel_size(PlannerInfo *root, RelOptInfo *rel,
  * build_joinrel_tlist, and baserestrictcost is not used for join rels.
  */
 void
-set_joinrel_size_estimates(PlannerInfo *root, RelOptInfo *rel,
-						   RelOptInfo *outer_rel,
-						   RelOptInfo *inner_rel,
-						   SpecialJoinInfo *sjinfo,
-						   List *restrictlist)
+set_joinrel_size_estimates(PlannerInfo *root, RelOptInfo *rel, RelOptInfo *outer_rel, RelOptInfo *inner_rel, SpecialJoinInfo *sjinfo, List *restrictlist)
 {
-	rel->rows = calc_joinrel_size_estimate(root,
-										   rel,
-										   outer_rel,
-										   inner_rel,
-										   outer_rel->rows,
-										   inner_rel->rows,
-										   sjinfo,
-										   restrictlist);
+	if(query_splitting_algorithm == Optimal)
+		rel->rows = learn_from_history(root, rel, outer_rel, inner_rel, restrictlist, sjinfo);
+	else
+		rel->rows = calc_joinrel_size_estimate(root, rel, outer_rel, inner_rel, outer_rel->rows, inner_rel->rows, sjinfo, restrictlist);
+	
 }
 
 /*
@@ -4401,14 +4375,10 @@ get_parameterized_joinrel_size(PlannerInfo *root, RelOptInfo *rel,
 	 * on the pair of input paths provided, though ideally we'd get the same
 	 * estimate for any pair with the same parameterization.
 	 */
-	nrows = calc_joinrel_size_estimate(root,
-									   rel,
-									   outer_path->parent,
-									   inner_path->parent,
-									   outer_path->rows,
-									   inner_path->rows,
-									   sjinfo,
-									   restrict_clauses);
+	if (query_splitting_algorithm == Optimal)
+		nrows = learn_from_history(root, rel, outer_path->parent, inner_path->parent, restrict_clauses, sjinfo);
+	else
+		nrows = calc_joinrel_size_estimate(root, rel, outer_path->parent, inner_path->parent, outer_path->rows, inner_path->rows, sjinfo, restrict_clauses);
 	/* For safety, make sure result is not more than the base estimate */
 	if (nrows > rel->rows)
 		nrows = rel->rows;
@@ -4572,12 +4542,7 @@ calc_joinrel_size_estimate(PlannerInfo *root,
  * able to get a better answer when the pg_statistic stats are missing or out
  * of date.
  */
-static Selectivity
-get_foreign_key_join_selectivity(PlannerInfo *root,
-								 Relids outer_relids,
-								 Relids inner_relids,
-								 SpecialJoinInfo *sjinfo,
-								 List **restrictlist)
+Selectivity get_foreign_key_join_selectivity(PlannerInfo *root, Relids outer_relids, Relids inner_relids, SpecialJoinInfo *sjinfo, List **restrictlist)
 {
 	Selectivity fkselec = 1.0;
 	JoinType	jointype = sjinfo->jointype;
