@@ -79,7 +79,7 @@
 #define global_view 5
 
 extern int query_splitting_algorithm;
-extern int order_decisiont;
+extern int order_decision;
 
 /*
  * struct varatt_external is a traditional "TOAST pointer", that is, the
