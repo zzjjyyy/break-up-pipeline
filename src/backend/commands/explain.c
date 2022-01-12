@@ -39,7 +39,6 @@
 #include "utils/typcache.h"
 #include "utils/xml.h"
 
-
 /* Hook for plugins to get control in ExplainOneQuery() */
 ExplainOneQuery_hook_type ExplainOneQuery_hook = NULL;
 
@@ -463,24 +462,20 @@ ExplainOneUtility(Node *utilityStmt, IntoClause *into, ExplainState *es,
  * to call it.
  */
 void
-ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
-			   const char *queryString, ParamListInfo params,
-			   QueryEnvironment *queryEnv, const instr_time *planduration)
+ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es, const char *queryString, ParamListInfo params, QueryEnvironment *queryEnv, const instr_time *planduration)
 {
-	DestReceiver *dest;
-	QueryDesc  *queryDesc;
-	instr_time	starttime;
-	double		totaltime = 0;
-	int			eflags;
-	int			instrument_option = 0;
-
+	DestReceiver* dest;
+	QueryDesc* queryDesc;
+	instr_time starttime;
+	double totaltime = 0;
+	int eflags;
+	int instrument_option = 0;
 	Assert(plannedstmt->commandType != CMD_UTILITY);
-
 	if (es->analyze && es->timing)
 		instrument_option |= INSTRUMENT_TIMER;
-	else if (es->analyze)
+	/* zhaojy20 add a condition here */
+	else if (es->analyze || query_splitting_algorithm == Optimal)
 		instrument_option |= INSTRUMENT_ROWS;
-
 	if (es->buffers)
 		instrument_option |= INSTRUMENT_BUFFERS;
 
@@ -511,12 +506,12 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 	queryDesc = CreateQueryDesc(plannedstmt, queryString,
 								GetActiveSnapshot(), InvalidSnapshot,
 								dest, params, queryEnv, instrument_option);
-
-	/* Select execution options */
-	if (es->analyze)
-		eflags = 0;				/* default run-to-completion flags */
+	/* zhaojy20 add a condition here */
+	if (es->analyze || query_splitting_algorithm == Optimal)
+		eflags = 0;
 	else
 		eflags = EXEC_FLAG_EXPLAIN_ONLY;
+
 	if (into)
 		eflags |= GetIntoRelEFlags(into);
 
@@ -524,7 +519,8 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 	ExecutorStart(queryDesc, eflags);
 
 	/* Execute the plan for statistics if asked for */
-	if (es->analyze)
+	/* zhaojy20 add a condition here */
+	if (es->analyze || query_splitting_algorithm == Optimal)
 	{
 		ScanDirection dir;
 
@@ -557,7 +553,7 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 	}
 
 	/* Print info about runtime of triggers */
-	if (es->analyze)
+	if (es->analyze || query_splitting_algorithm == Optimal)
 		ExplainPrintTriggers(es, queryDesc);
 
 	/*
@@ -566,7 +562,7 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 	 * depending on build options.  Might want to separate that out from COSTS
 	 * at a later stage.
 	 */
-	if (es->costs)
+	if (es->costs && query_splitting_algorithm != Optimal)
 		ExplainPrintJITSummary(es, queryDesc);
 
 	/*
