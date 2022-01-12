@@ -448,7 +448,9 @@ heapgetpage(TableScanDesc sscan, BlockNumber page)
 
 			CheckForSerializableConflictOut(valid, scan->rs_base.rs_rd,
 											&loctup, buffer, snapshot);
-
+			/* zhaojy20 */
+			if(query_splitting_algorithm == Minsubquery || query_splitting_algorithm == RelationshipCenter || query_splitting_algorithm == EntityCenter)
+				valid = true;
 			if (valid)
 				scan->rs_vistuples[ntup++] = lineoff;
 		}
