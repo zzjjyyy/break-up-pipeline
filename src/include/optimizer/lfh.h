@@ -19,6 +19,7 @@
 #include "nodes/pg_list.h"
 #include "optimizer/pathnode.h"
 
+double factor;
 typedef struct myListCell myListCell;
 
 // To avoid palloc() appearing in this block, it's convinient to define new structure as myXXX.
