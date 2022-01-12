@@ -68,7 +68,6 @@
 #include "utils/timestamp.h"
 #include "pg_trace.h"
 
-
 /*
  *	User-tweakable parameters
  */
@@ -1084,12 +1083,7 @@ AtStart_Memory(void)
 	 * size, so that space will be reserved immediately.
 	 */
 	if (TransactionAbortContext == NULL)
-		TransactionAbortContext =
-			AllocSetContextCreate(TopMemoryContext,
-								  "TransactionAbortContext",
-								  32 * 1024,
-								  32 * 1024,
-								  32 * 1024);
+		TransactionAbortContext = AllocSetContextCreate(TopMemoryContext, "TransactionAbortContext", 32 * 1024, 32 * 1024, 32 * 1024);
 
 	/*
 	 * We shouldn't have a transaction context already.
@@ -1099,10 +1093,8 @@ AtStart_Memory(void)
 	/*
 	 * Create a toplevel context for the transaction.
 	 */
-	TopTransactionContext =
-		AllocSetContextCreate(TopMemoryContext,
-							  "TopTransactionContext",
-							  ALLOCSET_DEFAULT_SIZES);
+
+	TopTransactionContext = AllocSetContextCreate(TopMemoryContext, "TopTransactionContext", ALLOCSET_DEFAULT_SIZES);
 
 	/*
 	 * In a top-level transaction, CurTransactionContext is the same as
@@ -2251,8 +2243,9 @@ CommitTransaction(void)
 	s->curTransactionOwner = NULL;
 	CurTransactionResourceOwner = NULL;
 	TopTransactionResourceOwner = NULL;
-
-	//AtCommit_Memory();
+	
+	/* F */
+	AtCommit_Memory();
 
 	s->fullTransactionId = InvalidFullTransactionId;
 	s->subTransactionId = InvalidSubTransactionId;
