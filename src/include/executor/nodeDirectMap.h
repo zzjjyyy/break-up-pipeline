@@ -14,6 +14,7 @@
 
 #include "nodes/execnodes.h"
 
+int enable_directmap;
 extern DirectMapState* ExecInitDirectMap(DirectMap* node, EState* estate, int eflags);
 extern void ExecEndDirectMap(DirectMapState* node);
 extern void ExecReScanDirectMap(DirectMapState* node);
