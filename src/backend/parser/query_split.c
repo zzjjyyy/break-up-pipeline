@@ -16,10 +16,6 @@
 #include "utils/relmapper.h"
 #include "commands/vacuum.h"
 
-extern int query_splitting_algorithm;
-extern int order_decision;
-extern int enable_directmap;
-
 #define NEWBETTER 1
 #define OLDBETTER 2
 
@@ -119,10 +115,8 @@ void doQSparse(const char* query_string, const char* commandTag, Node* pstmt, Qu
 		if (rte->relkind != RELKIND_RELATION)
 		{
 			MemoryContext oldcontext = MemoryContextSwitchTo(MessageContext);
-			enable_directmap = false;
 			plannedstmt = planner(querytree, CURSOR_OPT_PARALLEL_OK, NULL);
 			QSExecutor(query_string, commandTag, pstmt, plannedstmt, DestRemote, NULL, completionTag, querytree, NULL, NIL, oldcontext);
-			enable_directmap = true;
 			return;
 		}
 		length++;
@@ -130,10 +124,8 @@ void doQSparse(const char* query_string, const char* commandTag, Node* pstmt, Qu
 	if (length <= 2)
 	{
 		MemoryContext oldcontext = MemoryContextSwitchTo(MessageContext);
-		enable_directmap = false;
 		plannedstmt = planner(querytree, CURSOR_OPT_PARALLEL_OK, NULL);
 		QSExecutor(query_string, commandTag, pstmt, plannedstmt, DestRemote, NULL, completionTag, querytree, NULL, NIL, oldcontext);
-		enable_directmap = true;
 		return;
 	}
 	//split parent query by foreign key
