@@ -47,7 +47,7 @@
 
 #define UNKNOWN 0xcdcdcdcd
 
-#define ALLOCSET_MAP_SIZES ALLOCSET_DEFAULT_MINSIZE, ALLOCSET_DEFAULT_INITSIZE, (512 * 1024 * 1024)
+#define ALLOCSET_MAP_SIZES ALLOCSET_DEFAULT_MINSIZE, 1024 * 1024, (1024 * 1024 * 1024)
 
 void fillMap(DirectMapState* node, Form_pg_attribute att, Datum* MapP, uint16* infomask, Datum datum, bool is_null);
 static bool DirectFetchInnerTuple(DirectMapState* node, Datum* map, ExprContext* econtext, unsigned int* offsete);
@@ -273,7 +273,7 @@ static bool DirectFetchInnerTuple(DirectMapState* node, Datum* map, ExprContext*
 static Datum* ExecMapCreate(DirectMapState* node, PlanState* planstate, ExprContext* econtext, Bitmapset* inner_attrs)
 {
 	TupleTableSlot* slot;
-	node->mapsize = planstate->plan->plan_rows * 1.5;
+	node->mapsize = planstate->plan->plan_rows * 1.1;
 	unsigned int num;
 	slot = ExecProcNode(planstate);
 	planstate->ps_ExprContext->ecxt_scantuple = slot;
@@ -300,7 +300,7 @@ static Datum* ExecMapCreate(DirectMapState* node, PlanState* planstate, ExprCont
 		num = slot->tts_values[node->dm_innerattr - 1];
 		if (num >= node->mapsize)
 		{
-			node->mapsize = num * 1.5;
+			node->mapsize = num * 1.5;//1.5 for 23, 24, 30 for 1.5
 			oldcxt = MemoryContextSwitchTo(node->mapCxt);
 			res = repalloc(res, node->mapsize * node->nDatumperTuple * sizeof(Datum));
 			MemoryContextSwitchTo(oldcxt);

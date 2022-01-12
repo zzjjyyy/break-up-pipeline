@@ -65,6 +65,7 @@
 #include "utils/ruleutils.h"
 #include "utils/snapmgr.h"
 
+#include "optimizer/lfh.h"
 
 /* Hooks for plugins to get control in ExecutorStart/Run/Finish/End */
 ExecutorStart_hook_type ExecutorStart_hook = NULL;
@@ -361,7 +362,9 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 		queryDesc->already_executed = true;
 		ExecutePlan(estate, queryDesc->planstate, queryDesc->plannedstmt->parallelModeNeeded, operation, sendTuples, count, direction, dest, execute_once);
 	}
-
+	/* zhaojy20 add 2 line here*/
+	if(query_splitting_algorithm == Optimal)
+		learnSelectivity(queryDesc, queryDesc->planstate);
 	/*
 	 * shutdown tuple receiver, if we started it
 	 */
