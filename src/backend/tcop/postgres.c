@@ -1029,7 +1029,9 @@ exec_simple_query(const char* query_string)
 	else if (strcmp(query_string, "switch to c_rsq;") == 0)
 		order_decision = hybrid_sqrt;
 	else if (strcmp(query_string, "switch to c_rlg;") == 0)
-		order_decision = hybrid_log;	
+		order_decision = hybrid_log;
+	else if (strcmp(query_string, "switch to global;") == 0)
+		order_decision = global_view;
 	enable_directmap = false;
 	if (strcmp(query_string, "enable DM;") == 0)
 		enable_directmap = true;
