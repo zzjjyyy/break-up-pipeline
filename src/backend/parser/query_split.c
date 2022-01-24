@@ -15,6 +15,8 @@
 #include "commands/portalcmds.h"
 #include "utils/relmapper.h"
 #include "commands/vacuum.h"
+#include "utils/rel.h"
+#include "storage/buf_internals.h"
 
 #define NEWBETTER 1
 #define OLDBETTER 2
@@ -51,7 +53,7 @@ static bool is_RC(Expr* expr);
 //Transefer jointree to graph
 static bool* List2Graph(bool* is_relationship, List* joinlist, List* FKlist, int length);
 //Make a aggregation function as result
-static List* makeAggref(List* targetList);
+static List* removeAggref(List* targetList);
 //give the new value to some var, prepare for the next subquery
 static List* Prepare4Next(Query* global_query, Index* transfer_array, DR_intorel* receiver, PlannedStmt* plannedstmt,char* relname, List* FKlist);
 static void Recon(char* query_string, char* commandTag, Node* pstmt, Query* ori_query, char* completionTag);
@@ -130,6 +132,7 @@ void doQSparse(const char* query_string, const char* commandTag, Node* pstmt, Qu
 	}
 	//split parent query by foreign key
 	Recon(query_string, commandTag, pstmt, querytree, completionTag);
+
 	return;
 }
 
@@ -247,7 +250,9 @@ static void Recon(char* query_string, char* commandTag, Node* pstmt, Query* ori_
 		FKlist = QSExecutor(query_string, commandTag, pstmt, plannedstmt, mydest, relname, completionTag, global_query, transfer_array, FKlist, oldcontext);
 		//finish_xact_command();
 		if (mydest == DestRemote)
+		{
 			break;
+		}
 		switch (global_query->jointree->quals->type)
 		{
 			case T_BoolExpr:
@@ -475,7 +480,7 @@ static List* QSExecutor(char* query_string, const char* commandTag, Node* pstmt,
 	portal = CreatePortal("", true, true);
 	portal->visible = false;
 	PortalDefineQuery(portal, NULL, query_string, commandTag, plantree_list, NULL);
-	PortalStart(portal, NULL, 0, InvalidSnapshot);
+	PortalStart(portal, NULL, 0, SnapshotAny);
 	format = 0;
 	PortalSetResultFormat(portal, 1, &format);
 	if (dest == DestRemote)
@@ -631,6 +636,7 @@ static List* Prepare4Next(Query* global_query, Index* transfer_array, DR_intorel
 	{
 		if (transfer_array[i] != 0)
 		{
+			RangeTblEntry* rte = list_nth(global_query->rtable, i);
 			global_query->rtable = list_delete(global_query->rtable, list_nth(global_query->rtable, i));
 			global_query->jointree->fromlist = list_delete(global_query->jointree->fromlist, list_nth(global_query->jointree->fromlist, i));
 		}
@@ -646,7 +652,16 @@ static List* Prepare4Next(Query* global_query, Index* transfer_array, DR_intorel
 	foreach(lc, global_query->targetList)
 	{
 		TargetEntry* tar = (TargetEntry*)lfirst(lc);
-		Var* vtar = (Var*)tar->expr;
+		Var* vtar;
+		if (tar->expr->type == T_Aggref)
+		{
+			TargetEntry* te = lfirst(((Aggref*)tar->expr)->args->head);
+			vtar = te->expr;
+		}
+		else
+		{
+			vtar = (Var*)tar->expr;
+		}
 		if (transfer_array[vtar->varnoold - 1] != 0)
 		{
 			tar->resorigtbl = relid;
@@ -963,7 +978,11 @@ static Query* createQuery(const Query* global_query, CommandDest dest, List* rta
 	}
 	if (dest == DestRemote)
 	{
-		query->hasAggs = true;
+		query->hasAggs = global_query->hasAggs;
+	}
+	else
+	{
+		query->hasAggs = false;
 	}
 	return query;
 }
@@ -1138,6 +1157,10 @@ static List* setfromlist(List* fromlist, Index* transfer_array, int length)
 static List* settargetlist(const List* global_rtable, List* local_rtable, CommandDest dest, List* varlist, List* targetlist, Index* transfer_array, int length)
 {
 	ListCell* lc;
+	if (dest != DestRemote)
+	{
+		targetlist = removeAggref(targetlist);
+	}
 	foreach(lc, targetlist)
 	{
 		bool reserved = false;
@@ -1150,7 +1173,8 @@ static List* settargetlist(const List* global_rtable, List* local_rtable, Comman
 		foreach(lc1, local_rtable)
 		{
 			RangeTblEntry* rte = (RangeTblEntry*)lfirst(lc1);
-			if (rte->relid == tar->resorigtbl)
+			RangeTblEntry* rte_1 = list_nth(global_rtable, ((Var*)tar->expr)->varno - 1);
+			if (rte->relid == rte_1->relid)
 			{
 				Var* vtar = (Var*)tar->expr;
 				vtar->varno = transfer_array[vtar->varno - 1];
@@ -1162,12 +1186,6 @@ static List* settargetlist(const List* global_rtable, List* local_rtable, Comman
 		if (reserved)
 			continue;
 		targetlist = list_delete(targetlist, lfirst(lc));
-	}
-	if (dest == DestRemote)
-	{
-		List* re_targetlist = targetlist;
-		re_targetlist = makeAggref(targetlist);
-		return re_targetlist;
 	}
 	foreach(lc, varlist)
 	{
@@ -1390,6 +1408,27 @@ List* makeAggref(List* targetList)
 		aggref->location = -1;
 		tar->expr = aggref;
 		resList = lappend(resList, tar);
+	}
+	return resList;
+}
+
+List* removeAggref(List* targetList)
+{
+	List* resList = NIL;
+	ListCell* lc;
+	foreach(lc, targetList)
+	{
+		TargetEntry* old_tar = (TargetEntry*)lfirst(lc);
+		if (old_tar->expr->type == T_Aggref)
+		{
+			TargetEntry* tar = lfirst(((Aggref*)old_tar->expr)->args->head);
+			tar->resname = old_tar->resname;
+			resList = lappend(resList, tar);
+		}
+		else
+		{
+			resList = lappend(resList, old_tar);
+		}
 	}
 	return resList;
 }
