@@ -4,7 +4,7 @@
  *
  *
  * IDENTIFICATION
- *	  src/include/parser/query_split.c
+ *	  src/include/parser/query_split.h
  *
  *-------------------------------------------------------------------------
  */
