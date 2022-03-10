@@ -5,9 +5,10 @@
 
 
 # Reproduction
-* If you want to skip compilation phase, we provide two version for reproduction.
+* If you want to skip compilation phase, we provide two versions for reproduction.
 * The first one is a docker image, which supports query split, optimal optimizer and original PostgreSQL. We compile the source code and place it in the docker image, you can pull the image by command "docker pull zhaojy20/query_split:v1".
 * The second one is PostgreSQL UDF "query_split.dll", which is a light-weight reproduction only for query split. We decribe them in detail below repectively.
+* However, we do not provide Join Order Benchmark in both versions because of size. To obtain JOB, please search gregrahn/join-order-benchmark in Github and install JOB according to their guidance.
 
 # Details for Docker Image
 * To start the image, you can use the command "docker run -it -p 5432:5432 query_split".
