@@ -23,7 +23,7 @@
 
 myList* CheckList = ((myList*)NULL);
 
-extern double factor;
+extern double factor = 0.1;
 extern double clamp_row_est(double nrows);
 extern Selectivity get_foreign_key_join_selectivity(PlannerInfo* root, Relids outer_relids, Relids inner_relids, SpecialJoinInfo* sjinfo, List** restrictlist);
 extern Selectivity clauselist_selectivity(PlannerInfo* root, List* clauses, int varRelid, JoinType jointype, SpecialJoinInfo* sjinfo);
