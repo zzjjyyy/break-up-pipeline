@@ -1,5 +1,5 @@
 # Compilation
-* In ./src directory, we give all modified files and our new-created files (lfh.h/.c, nodeDirectMap.h/.c and query_split.h/.c). To compile our codes, you need to first get the source codes of PostgreSQL 12.3. And then placing the given files into corresponding file folder. All needed file folders are given by Postgres.
+* In ./src directory, we give all modified files and our new-created files (lfh.h/.c and query_split.h/.c). To compile our codes, you need to first get the source codes of PostgreSQL 12.3. And then placing the given files into corresponding file folder. All needed file folders are given by Postgres.
 * Adding the given files to the postgres project or do corresponding modification to makefile, and compiling the postgres project.
 * When you install our modifed PostgreSQL, the default query processing mode is orignial PostgreSQL. By embedded command "switch to Postgres;", you can switch the current mode to original PostgreSQL as well.
 
