@@ -910,23 +910,6 @@ _copyHashJoin(const HashJoin *from)
 }
 
 /*
- * _copyDirectMap
- */
-static DirectMap* _copyDirectMap(const DirectMap* from)
-{
-	DirectMap* newnode = makeNode(DirectMap);
-	/*
-	 * copy node superclass fields
-	 */
-	CopyJoinFields((const Join*)from, (Join*)newnode);
-	/*
-	 * copy remainder of node
-	 */
-	COPY_NODE_FIELD(directParams);
-	return newnode;
-}
-
-/*
  * _copyMaterial
  */
 static Material *
@@ -4916,9 +4899,6 @@ copyObjectImpl(const void *from)
 			break;
 		case T_HashJoin:
 			retval = _copyHashJoin(from);
-			break;
-		case T_DirectMap:
-			retval = _copyDirectMap(from);
 			break;
 		case T_Material:
 			retval = _copyMaterial(from);
