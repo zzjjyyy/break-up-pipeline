@@ -64,6 +64,7 @@ static bool intorel_receive(TupleTableSlot *slot, DestReceiver *self);
 static void intorel_shutdown(DestReceiver *self);
 static void intorel_destroy(DestReceiver *self);
 
+/* We move the definition of DR_intorel to the createas.h*/
 
 /*
  * create_ctas_internal
