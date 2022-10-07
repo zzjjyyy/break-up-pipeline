@@ -44,7 +44,6 @@
 #include "commands/createas.h"
 #include "commands/matview.h"
 #include "commands/prepare.h"
-#include "executor/nodeDirectMap.h"
 #include "executor/spi.h"
 #include "jit/jit.h"
 #include "libpq/libpq.h"
