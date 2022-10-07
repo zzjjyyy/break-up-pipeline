@@ -24,6 +24,7 @@
 
 extern ObjectAddress ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 									   ParamListInfo params, QueryEnvironment *queryEnv, char *completionTag);
+/* We move the definition of DR_intorel from createas.c to here */
 typedef struct
 {
 	DestReceiver pub;			/* publicly-known function pointers */
