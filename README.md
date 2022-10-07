@@ -7,15 +7,9 @@
 # Reproduction
 * After compilation, you can reproduce the results in our paper.
 * Query split consists of two parts: query splitting algorithm and execution ordr decision. By command "switch to minsubquery;", "switch to relationshipcenter;" and "switch to entitycenter;", you change the query splitting algorithm. By command "switch to oc;"(cost(q)), "switch to or;"(row(q)), "switch to c_r;"(hybrid_row), "switch to c_rsq;"(hybrid_sqrt), "switch to c_rlg;"(hybrid_log) and "switch to global;" (global_sel), you change the execution ordr decision. 
-* To use the default PostgrteSQL, you can enter the command "switch to None;".
+* To use the default PostgrteSQL, you can enter the command "switch to Postgres;".
 * Note that When you enter these commands, the database will return "ERROR: syntax error at or near "switch" at character 1", this is OK. Because PostgreSQL parser cannot identify these code correctly, however, the parameters are actually changed by our embedded code.
 * The command "explain" is not supported yet in query split. And query split is not support for non-SPJ query, such as outer join, except, etc.
-
-# Details for query_split.dll
-* query_split.dll only supports query split.
-* First, we move the query_split.dll to ./lib in the PostgreSQL installation directory.
-* Then, we start PostgreSQL and use command "CREATE FUNCTION query_split_exec(cstring, interger, integer) RETURNS void AS 'query_split' LANGUAGE C IMMUTABLE STRICT;".
-* After that, use command "select * from query_split_exec('select ...', x, y)" to run the query split, where x is the parameter for query splittiing algorithm (0 for Minsubquery, 1 for RelationshipCenter and 2 for EntityCenter), y is the parameter for execution order decision (0 for cost(q), 1 for row(q), 2 for hybrid_row, 3 for hybrid_sqrt, 4 for hybrid_log, 5 for global_sel). 
 
 # Potential Bugs
 * The local buffer would be released after the end of a session. We recommand execute one query each session for reproducing query split, as the local buffer consumpition is very huge in query split. Executing too many queries in one session may lead to some unfixed bugs. In future, we will improve this part.
