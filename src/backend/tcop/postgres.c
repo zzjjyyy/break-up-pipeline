@@ -1025,21 +1025,7 @@ exec_simple_query(const char* query_string)
 		order_decision = hybrid_log;
 	else if (strcmp(query_string, "switch to global;") == 0)
 		order_decision = global_view;
-	enable_directmap = false;
-	if (strcmp(query_string, "enable DM;") == 0)
-		enable_directmap = true;
-	else if (strcmp(query_string, "disable DM;") == 0)
-		enable_directmap = false;
-	char* substr = strstr(query_string, "set factor to ");
-	if (substr != NULL)
-	{
-		int len = strlen(substr + 14);
-		char* str = malloc(len);
-		strcpy(str, substr + 14);
-		str[len - 1] = '\0';
-		factor = atof(str);
-		free(str);
-	}
+
 	parsetree_list = pg_parse_query(query_string);
 	if (check_log_statement(parsetree_list))
 	{
@@ -1111,9 +1097,7 @@ exec_simple_query(const char* query_string)
 			querytree_list = pg_analyze_and_rewrite(parsetree, query_string, NULL, 0, NULL);
 			if (snapshot_set)
 				PopActiveSnapshot();
-			GetLocalBufferStorage(1);
 			doQSparse(query_string, commandTag, parsetree->stmt, querytree_list->head->data.ptr_value, completionTag);
-			GetLocalBufferStorage(1);
 		}
 		if (lnext(parsetree_item) == NULL)
 		{
