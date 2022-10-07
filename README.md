@@ -6,9 +6,10 @@
 
 # Reproduction
 * After compilation, you can reproduce the results in our paper.
-* Query split consists of two parts: query splitting algorithm and execution ordr decision. By command "switch to minsubquery;", "switch to relationshipcenter;" and "switch to entitycenter;", you change the query splitting algorithm. By command "switch to oc;"(cost(q)), "switch to or;"(row(q)), "switch to c_r;"(hybrid_row), "switch to c_rsq;"(hybrid_sqrt), "switch to c_rlg;"(hybrid_log) and "switch to global;" (global_sel), you change the execution ordr decision. Note that When you enter these commands, the database will return "ERROR: syntax error at or near "switch" at character 1", this is OK. Because PostgreSQL parser cannot identify these code correctly, however, the parameters are actually changed by our embedded code.
+* Query split consists of two parts: query splitting algorithm and execution ordr decision. By command "switch to minsubquery;", "switch to relationshipcenter;" and "switch to entitycenter;", you change the query splitting algorithm. By command "switch to oc;"(cost(q)), "switch to or;"(row(q)), "switch to c_r;"(hybrid_row), "switch to c_rsq;"(hybrid_sqrt), "switch to c_rlg;"(hybrid_log) and "switch to global;" (global_sel), you change the execution ordr decision. 
+* To use the default PostgrteSQL, you can enter the command "switch to None;".
+* Note that When you enter these commands, the database will return "ERROR: syntax error at or near "switch" at character 1", this is OK. Because PostgreSQL parser cannot identify these code correctly, however, the parameters are actually changed by our embedded code.
 * The command "explain" is not supported yet in query split. And query split is not support for non-SPJ query, such as outer join, except, etc.
-* By command "enable\disable DM;", you allow or disallow the physical opertor "DirectMap", which is an attempt for the improvement of merge join and hash join.
 
 # Details for query_split.dll
 * query_split.dll only supports query split.
