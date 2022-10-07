@@ -174,7 +174,7 @@ extern HashPath *create_hashjoin_path(PlannerInfo *root,
 									  List *restrict_clauses,
 									  Relids required_outer,
 									  List *hashclauses);
-extern DirectMapPath* create_directmap_path(PlannerInfo* root, RelOptInfo* joinrel, JoinType jointype, JoinCostWorkspace* workspace, JoinPathExtraData* extra, Path* outer_path, Path* inner_path, Relids required_outer, List* restrict_clauses);
+
 extern ProjectionPath *create_projection_path(PlannerInfo *root,
 											  RelOptInfo *rel,
 											  Path *subpath,
