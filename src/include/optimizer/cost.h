@@ -61,7 +61,6 @@ extern PGDLLIMPORT bool enable_nestloop;
 extern PGDLLIMPORT bool enable_material;
 extern PGDLLIMPORT bool enable_mergejoin;
 extern PGDLLIMPORT bool enable_hashjoin;
-extern PGDLLIMPORT bool enable_directmap;
 extern PGDLLIMPORT bool enable_gathermerge;
 extern PGDLLIMPORT bool enable_partitionwise_join;
 extern PGDLLIMPORT bool enable_partitionwise_aggregate;
@@ -156,8 +155,7 @@ extern void initial_cost_hashjoin(PlannerInfo *root,
 extern void final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 								JoinCostWorkspace *workspace,
 								JoinPathExtraData *extra);
-extern void initial_cost_directmap(PlannerInfo* root, JoinCostWorkspace* workspace, JoinType jointype, List* hashclauses,  Path* outer_path, Path* inner_path, JoinPathExtraData* extra);
-void final_cost_directmap(PlannerInfo* root, DirectMapPath* path, JoinCostWorkspace* workspace, JoinPathExtraData* extra);
+
 extern void cost_gather(GatherPath *path, PlannerInfo *root,
 						RelOptInfo *baserel, ParamPathInfo *param_info, double *rows);
 extern void cost_gather_merge(GatherMergePath *path, PlannerInfo *root,
