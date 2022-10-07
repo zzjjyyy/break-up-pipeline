@@ -67,10 +67,6 @@
 #define EntityCenter 3
 #endif
 
-#ifndef Optimal
-#define Optimal 4
-#endif
-
 #define only_cost 0
 #define only_row 1
 #define hybrid_row 2
