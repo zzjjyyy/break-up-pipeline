@@ -5,20 +5,10 @@
 
 
 # Reproduction
-* If you want to skip compilation phase, we provide two versions for reproduction.
-* The first one is a docker image, which supports query split, optimal optimizer and original PostgreSQL. We compile the source code and place it in the docker image, you can pull the image by command "docker pull zhaojy20/query_split:v1".
-* The second one is PostgreSQL UDF "query_split.dll", which is a light-weight reproduction only for query split. We decribe them in detail below repectively.
-* However, we do not provide Join Order Benchmark in both versions because of size. To obtain JOB, please search gregrahn/join-order-benchmark in Github and install JOB according to their guidance.
-
-# Details for Docker Image
-* To start the image, you can use the command "docker run -it -p 5432:5432 query_split".
-* In the image cmd, you can use following command to start the PostgreSQL serever:" su - postgres", "cd /usr/local/pgsql/bin", "./pg_ctl -D ../data -l logfile start". Then, you can start PostgreSQL by "psql -U postgres" and password is 12345. Now, you have a PostgreSQL server listens on 5432 port.
-* The image we provide support both query split and optimal optimizer. You can change them by our new-desinged command.
-* By "switch to Optimal;", we switch the execution mode to our baseline "optimal optimizer". This mode only support the command decorated by "explain". For example, in this mode, you should iterate the same command "explain(analyze) SELECT ..." until the output plan stops changing. And by "set factor = XX (double);", you can change this factor. If factor < 1, we encourage optimzier to try new join order (we use 0.1 for most queries and 0.5 for some extremely large queries). The less factor is, the longer time is needed to obtain the optimal plan.
-* Query split consists of two parts: query splitting algorithm and execution ordr decision. By command "switch to minsubquery;", "switch to relationshipcenter;" and "switch to entitycenter;", you change the query splitting algorithm. By command "switch to oc;"(cost(q)), "switch to or;"(row(q)), "switch to c_r;"(hybrid_row), "switch to c_rsq;"(hybrid_sqrt), "switch to c_rlg;"(hybrid_log) and "switch to global;" (global_sel), you change the execution ordr decision.
+* After compilation, you can reproduce the results in our paper.
+* Query split consists of two parts: query splitting algorithm and execution ordr decision. By command "switch to minsubquery;", "switch to relationshipcenter;" and "switch to entitycenter;", you change the query splitting algorithm. By command "switch to oc;"(cost(q)), "switch to or;"(row(q)), "switch to c_r;"(hybrid_row), "switch to c_rsq;"(hybrid_sqrt), "switch to c_rlg;"(hybrid_log) and "switch to global;" (global_sel), you change the execution ordr decision. Note that When you enter these commands, the database will return "ERROR: syntax error at or near "switch" at character 1", this is OK. Because PostgreSQL parser cannot identify these code correctly, however, the parameters are actually changed by our embedded code.
 * The command "explain" is not supported yet in query split. And query split is not support for non-SPJ query, such as outer join, except, etc.
 * By command "enable\disable DM;", you allow or disallow the physical opertor "DirectMap", which is an attempt for the improvement of merge join and hash join.
-* Note that When you enter these commands, the database will return "ERROR: syntax error at or near "switch" at character 1", this is OK. Because PostgreSQL parser cannot identify these code correctly, however, the parameters are actually changed by our embedded code.
 
 # Details for query_split.dll
 * query_split.dll only supports query split.
