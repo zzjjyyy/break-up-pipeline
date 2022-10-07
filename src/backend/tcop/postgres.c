@@ -53,7 +53,6 @@
 #include "miscadmin.h"
 #include "nodes/print.h"
 #include "nodes/makefuncs.h"
-#include "optimizer/lfh.h"
 #include "optimizer/optimizer.h"
 #include "pgstat.h"
 #include "pg_trace.h"
@@ -84,10 +83,6 @@
 #include "utils/timeout.h"
 #include "utils/timestamp.h"
 #include "mb/pg_wchar.h"
-
-/*zhaojy20 add them here*/
-//#define SHOW_MEMORY_STATS
-Block GetLocalBufferStorage(int flag);
 
 int query_splitting_algorithm = None;
 int order_decision = hybrid_sqrt;
@@ -1018,8 +1013,6 @@ exec_simple_query(const char* query_string)
 		query_splitting_algorithm = RelationshipCenter;
 	else if(strcmp(query_string, "switch to entitycenter;") == 0)
 		query_splitting_algorithm = EntityCenter;
-	else if (strcmp(query_string, "switch to Optimal;") == 0)
-		query_splitting_algorithm = Optimal;
 
 	if (strcmp(query_string, "switch to oc;") == 0)
 		order_decision = only_cost;
@@ -1081,7 +1074,7 @@ exec_simple_query(const char* query_string)
 			PushActiveSnapshot(GetTransactionSnapshot());
 			snapshot_set = true;
 		}
-		if(query_splitting_algorithm == None || query_splitting_algorithm == Optimal)
+		if(query_splitting_algorithm == None)
 		{
 			oldcontext = MemoryContextSwitchTo(MessageContext);
 			querytree_list = pg_analyze_and_rewrite(parsetree, query_string, NULL, 0, NULL);
